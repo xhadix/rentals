@@ -29,7 +29,8 @@ class ProductSeeder extends Seeder
                     'color' => 'black',
                     'brand' => 'apple',
                     'size' => 'large',
-                ]
+                ],
+                'available_regions' => ['SG', 'MY', 'TH'], // Not available in Indonesia
             ],
             [
                 'name' => 'Samsung Galaxy S24 Ultra',
@@ -40,7 +41,8 @@ class ProductSeeder extends Seeder
                     'color' => 'blue',
                     'brand' => 'samsung',
                     'size' => 'large',
-                ]
+                ],
+                'available_regions' => ['SG', 'MY', 'TH', 'ID'], // Available everywhere
             ],
             [
                 'name' => 'Sony WH-1000XM5 Headphones',
@@ -51,7 +53,56 @@ class ProductSeeder extends Seeder
                     'color' => 'black',
                     'brand' => 'sony',
                     'size' => 'medium',
-                ]
+                ],
+                'available_regions' => ['SG', 'MY'], // Only available in SG and MY
+            ],
+            [
+                'name' => 'iPad Air 11" M2',
+                'description' => 'Apple iPad Air with M2 chip, ideal for digital art, productivity, and entertainment.',
+                'sku' => 'IPAD-AIR-M2-001',
+                'image_url' => 'https://example.com/images/ipad-air-m2.jpg',
+                'attributes' => [
+                    'color' => 'blue',
+                    'brand' => 'apple',
+                    'size' => 'medium',
+                ],
+                'available_regions' => ['SG', 'MY', 'TH', 'ID'],
+            ],
+            [
+                'name' => 'Dell XPS 13 Plus',
+                'description' => 'Dell XPS 13 Plus ultrabook with Intel 13th gen processor and premium build quality.',
+                'sku' => 'DELL-XPS13-001',
+                'image_url' => 'https://example.com/images/dell-xps13.jpg',
+                'attributes' => [
+                    'color' => 'black',
+                    'brand' => 'dell',
+                    'size' => 'medium',
+                ],
+                'available_regions' => ['SG', 'TH'], // Premium product, limited regions
+            ],
+            [
+                'name' => 'Nintendo Switch OLED',
+                'description' => 'Nintendo Switch OLED gaming console with vibrant screen and enhanced audio.',
+                'sku' => 'NINTENDO-SWITCH-OLED-001',
+                'image_url' => 'https://example.com/images/nintendo-switch-oled.jpg',
+                'attributes' => [
+                    'color' => 'red',
+                    'brand' => 'nintendo',
+                    'size' => 'small',
+                ],
+                'available_regions' => ['MY', 'TH', 'ID'], // Popular in Southeast Asia
+            ],
+            [
+                'name' => 'Canon EOS R6 Mark II',
+                'description' => 'Canon EOS R6 Mark II mirrorless camera with professional-grade features.',
+                'sku' => 'CANON-EOSR6M2-001',
+                'image_url' => 'https://example.com/images/canon-eos-r6m2.jpg',
+                'attributes' => [
+                    'color' => 'black',
+                    'brand' => 'canon',
+                    'size' => 'large',
+                ],
+                'available_regions' => ['SG', 'MY'], // Professional equipment
             ],
         ];
 
@@ -88,26 +139,43 @@ class ProductSeeder extends Seeder
                 }
             }
 
-            // Add pricing for all regions and rental periods
-            $this->createPricingForProduct($product);
+            // Add pricing for available regions and rental periods
+            $this->createPricingForProduct($product, $productData['available_regions'] ?? []);
         }
     }
 
-    private function createPricingForProduct(Product $product): void
+    private function createPricingForProduct(Product $product, array $availableRegions = []): void
     {
         $regions = Region::all();
         $rentalPeriods = RentalPeriod::all();
 
         $basePrices = [
-            'MBP-16-M3-001' => 300,
-            'SGS-S24U-001' => 150,
-            'SONY-WH1000XM5-001' => 50,
+            'MBP-16-M3-001' => 300,           // Premium laptop
+            'SGS-S24U-001' => 150,            // Premium smartphone
+            'SONY-WH1000XM5-001' => 50,       // Premium headphones
+            'IPAD-AIR-M2-001' => 120,         // Mid-range tablet
+            'DELL-XPS13-001' => 250,          // Premium ultrabook
+            'NINTENDO-SWITCH-OLED-001' => 80, // Gaming console
+            'CANON-EOSR6M2-001' => 400,       // Professional camera
         ];
 
         $basePrice = $basePrices[$product->sku] ?? 100;
 
+        // Regional pricing strategies
+        $regionMultipliers = [
+            'SG' => 1.0,    // Singapore - highest prices (reference)
+            'MY' => 0.85,   // Malaysia - 15% cheaper
+            'TH' => 0.75,   // Thailand - 25% cheaper
+            'ID' => 0.65,   // Indonesia - 35% cheaper
+        ];
+
         foreach ($regions as $region) {
-            $regionMultiplier = $region->code === 'SG' ? 1.0 : 0.85; // Malaysia is 15% cheaper
+            // Skip if product is not available in this region
+            if (!empty($availableRegions) && !in_array($region->code, $availableRegions)) {
+                continue;
+            }
+
+            $regionMultiplier = $regionMultipliers[$region->code] ?? 1.0;
             
             foreach ($rentalPeriods as $period) {
                 $periodMultiplier = match ($period->months) {
@@ -117,7 +185,14 @@ class ProductSeeder extends Seeder
                     default => 1.0,
                 };
 
-                $finalPrice = $basePrice * $regionMultiplier * $periodMultiplier;
+                // Add some product-specific pricing logic
+                $productMultiplier = 1.0;
+                if (str_contains($product->sku, 'APPLE') || str_contains($product->sku, 'MBP') || str_contains($product->sku, 'IPAD')) {
+                    // Apple products are more expensive in Southeast Asia
+                    $productMultiplier = $region->code === 'SG' ? 1.1 : 1.0;
+                }
+
+                $finalPrice = $basePrice * $regionMultiplier * $periodMultiplier * $productMultiplier;
 
                 ProductPricing::updateOrCreate(
                     [
@@ -129,7 +204,7 @@ class ProductSeeder extends Seeder
                         'product_id' => $product->id,
                         'region_id' => $region->id,
                         'rental_period_id' => $period->id,
-                        'price' => $finalPrice,
+                        'price' => round($finalPrice, 2),
                         'currency' => $region->currency,
                         'is_active' => true,
                     ]

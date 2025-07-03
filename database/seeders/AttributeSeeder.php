@@ -44,6 +44,9 @@ class AttributeSeeder extends Seeder
                     ['value' => 'samsung', 'display_value' => 'Samsung'],
                     ['value' => 'sony', 'display_value' => 'Sony'],
                     ['value' => 'lg', 'display_value' => 'LG'],
+                    ['value' => 'dell', 'display_value' => 'Dell'],
+                    ['value' => 'nintendo', 'display_value' => 'Nintendo'],
+                    ['value' => 'canon', 'display_value' => 'Canon'],
                 ]
             ],
         ];

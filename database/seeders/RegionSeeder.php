@@ -14,27 +14,41 @@ class RegionSeeder extends Seeder
     public function run(): void
     {
         $regions = [
-        [
-            'id' => 1,
-            'name' => 'Singapore',
-            'code' => 'SG',
-            'currency' => 'SGD',
-            'is_active' => true,
-        ],
-        [
-            'id' => 2,
-            'name' => 'Malaysia',
-            'code' => 'MY',
-            'currency' => 'MYR',
-            'is_active' => true,
-        ],
-    ];
+            [
+                'id' => 1,
+                'name' => 'Singapore',
+                'code' => 'SG',
+                'currency' => 'SGD',
+                'is_active' => true,
+            ],
+            [
+                'id' => 2,
+                'name' => 'Malaysia',
+                'code' => 'MY',
+                'currency' => 'MYR',
+                'is_active' => true,
+            ],
+            [
+                'id' => 3,
+                'name' => 'Thailand',
+                'code' => 'TH',
+                'currency' => 'THB',
+                'is_active' => true,
+            ],
+            [
+                'id' => 4,
+                'name' => 'Indonesia',
+                'code' => 'ID',
+                'currency' => 'IDR',
+                'is_active' => true,
+            ],
+        ];
 
-    foreach ($regions as $region) {
-        Region::updateOrCreate(
-            ['code' => $region['code']],
-            $region
-        );
-    }
+        foreach ($regions as $region) {
+            Region::updateOrCreate(
+                ['code' => $region['code']],
+                $region
+            );
+        }
     }
 }
