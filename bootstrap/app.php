@@ -12,7 +12,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->append(\ErlandMuchasaj\LaravelGzip\Middleware\GzipEncodeResponse::class);
+        $middleware->append(\App\Http\Middleware\GzipResponse::class);
+        
+        $middleware->alias([
+            'http.cache' => \App\Http\Middleware\HttpCacheMiddleware::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
