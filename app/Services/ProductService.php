@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Models\Product;
@@ -14,10 +16,13 @@ class ProductService
         ?int $rentalPeriodMonths = null,
         int $perPage = 20
     ): LengthAwarePaginator {
+        $currentPage = request()->get('page', 1);
+        
         $cacheKey = "products:index:" . md5(serialize([
             'region' => $regionCode,
             'rental_period' => $rentalPeriodMonths,
             'per_page' => $perPage,
+            'page' => $currentPage,
         ]));
 
         return Cache::remember($cacheKey, 300, function () use ($regionCode, $rentalPeriodMonths, $perPage) {
